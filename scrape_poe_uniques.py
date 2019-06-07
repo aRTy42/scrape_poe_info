@@ -65,9 +65,9 @@ def remove_wiki_formats(text):
 	
 	text = regex_wikilinks.sub(r'\1\2', text)	# remove wiki links with regular expression. See the start of the script.
 	text = text.replace('&lt;em class=&quot;tc -corrupted&quot;&gt;Corrupted&lt;/em&gt;', 'Corrupted')	# remove corrupted markup
-	text = text.replace('br /', 'br')
 	text = text.replace('&amp;#60;', '<').replace('&amp;#62;', '>')
 	text = text.replace('&lt;', '<').replace('&gt;', '>')
+	text = text.replace('<br />', ' ')
 	return text
 
 	
@@ -106,11 +106,15 @@ def get_api_results(item_category):
 	This function gets the wiki data for given unique item categories.
 	It uses the wiki's API and requests json format.
 	See this HTML version for belts to get a better idea how the API response is structured:
-	https://pathofexile.gamepedia.com/api.php?action=askargs&parameters=limit%3D500&conditions=Has%20item%20class::Belts|Has%20rarity::Unique&printouts=Has%20implicit%20stat%20text|Has%20explicit%20stat%20text
+	https://pathofexile.gamepedia.com/api.php?action=cargoquery&format=json&limit=500&tables=items&fields=name%2Cimplicit_stat_text%2Cexplicit_stat_text&where=rarity%3D%22unique%22+AND+class%3D%22Belts%22&group_by=items._pageName&formatversion=1
 	"""
 	
 	print('Getting data for ' + item_category)
-	r = requests.get('https://pathofexile.gamepedia.com/api.php?action=cargoquery&format=json&limit=500&tables=items&fields=name%2Cimplicit_stat_text%2Cexplicit_stat_text&where=rarity%3D%22unique%22+AND+class%3D%22' + item_category + '%22&having=items._pageName&formatversion=1')
+	if item_category is 'Maps':
+		r = requests.get('https://pathofexile.gamepedia.com/api.php?action=cargoquery&format=json&limit=500&tables=items&fields=items.name%2C+items.implicit_stat_text%2C+items.explicit_stat_text&where=items.rarity%3D%22unique%22+AND+items.class%3D%22Maps%22+AND+(_pageName+LIKE+%22%25(War+for+the+Atlas)%22+OR+_pageName+NOT+LIKE+%22%25(%25)%22)&group_by=items._pageName&formatversion=1')
+	else:
+		r = requests.get('https://pathofexile.gamepedia.com/api.php?action=cargoquery&format=json&limit=500&tables=items&fields=name%2Cimplicit_stat_text%2Cexplicit_stat_text&where=rarity%3D%22unique%22+AND+class%3D%22' + item_category + '%22&group_by=items._pageName&formatversion=1')
+	
 	rj = r.json()
 	api_results = rj['cargoquery']
 	
